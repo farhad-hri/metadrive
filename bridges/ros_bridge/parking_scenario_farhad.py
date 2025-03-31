@@ -42,6 +42,7 @@ print(dir(parking_spots))
 # For clarity, we print out each parking spot's key details.
 # In this example, we assume each parking spot is represented as a Road object.
 print("Total parking spots available:", len(parking_spots))
+
 for idx, spot in enumerate(parking_spots):
     print(dir(spot))
     # Display some representative info about the spot (e.g., start and end nodes)
