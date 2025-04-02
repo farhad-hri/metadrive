@@ -57,7 +57,14 @@ for idx, spot in enumerate(parking_spots):
     ax.plot(lines[:, 0] - parking_width/2.0, lines[:, 1], color='grey') 
     ax.plot(lines[:, 0] + parking_width/2.0, lines[:, 1], color='grey')
 
+other_agent_state = env.agents['agent1'].get_state()
+other_agent_state['position'][0], other_agent_state['position'][1] = center_spots[0][0], center_spots[0][1]
+env.agents['agent1'].set_state(other_agent_state)
+ 
 ego_state = env.agents['agent0'].get_state()
+ego_state['position'][0], ego_state['position'][1] = 15.0, 0.0
+ego_state['heading_theta'] = 0.0
+env.agents['agent0'].set_state(ego_state)
 
 ax.plot(ego_state['position'][0], ego_state['position'][1], color='green', marker='o', markersize=12)
 
@@ -67,7 +74,7 @@ ax.plot(other_state['position'][0], other_state['position'][1], color='red', mar
 ped = obj_1.get_state()
 ax.plot(ped['position'][0], ped['position'][1], color='orange', marker='o', markersize=24)
 
-for i in range(1, 10):
+for i in range(1, 1000):
     actions = {k: [1.0, .0] for k in env.agents.keys()}
     if len(env.agents) == 1:
         actions = {k: [-1.0, .0] for k in env.agents.keys()}

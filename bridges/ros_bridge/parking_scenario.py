@@ -5,6 +5,7 @@ from metadrive import MultiAgentParkingLotEnv
 from metadrive.component.traffic_participants.pedestrian import Pedestrian
 import pprint  # For pretty-printing data structures.
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Create an instance of the MultiAgentParkingLotEnv with custom configuration.
 env = MultiAgentParkingLotEnv(
@@ -67,29 +68,62 @@ print(dir(parking_spots))
 # Print the total number of parking spots available.
 print("Total parking spots available:", len(parking_spots))
 
+fig, ax = plt.subplots(figsize=(10, 8))
+
+parking_lanes_lines = []
+parking_lanes = []
+center_spots = []
+
 # Loop through each parking spot and display detailed information.
 for idx, spot in enumerate(parking_spots):
-    # Print available attributes and methods for the current parking spot.
-    print(dir(spot))
+    # # Print available attributes and methods for the current parking spot.
+    # print(dir(spot))
     
-    # Display key details about this parking spot.
-    print("Parking Spot {}:".format(idx))
-    print("  Start Node:", spot.start_node)  # Starting node of the spot.
-    print("  End Node:", spot.end_node)      # Ending node of the spot.
+    # # Display key details about this parking spot.
+    # print("Parking Spot {}:".format(idx))
+    # print("  Start Node:", spot.start_node)  # Starting node of the spot.
+    # print("  End Node:", spot.end_node)      # Ending node of the spot.
     
-    # Retrieve and potentially process lane information for this parking spot.
-    parking_lane = spot.get_lanes(current_map.road_network)
-    # To get center line for each spot
-    center_line = parking_lane[0].get_polyline()
+    # # Retrieve and potentially process lane information for this parking spot.
+    # parking_lane = spot.get_lanes(current_map.road_network)
+    # # To get center line for each spot
+    # center_line = parking_lane[0].get_polyline()
 
-    # Optionally retrieve all lane information from the parking lot's block network.
-    all_lanes = current_map.parking_lot.block_network.get_all_lanes()
-    parking_lane[0].width_at(0.0) # provide longitudinal value
-    # Print a separator line for clarity between parking spot details.
-    print("-" * 30)
+    # # Optionally retrieve all lane information from the parking lot's block network.
+    # all_lanes = current_map.parking_lot.block_network.get_all_lanes()
+    # parking_lane[0].width_at(0.0) # provide longitudinal value
+    # # Print a separator line for clarity between parking spot details.
+    # print("-" * 30)
+
+    lanes = spot.get_lanes(current_map.road_network)
+    parking_lanes.append(lanes)
+    lines = lanes[0].get_polyline()
+    parking_lanes_lines.append(lines)
+    center_spots.append([lines[0, 0], min(lines[:, 1]) + (max(lines[:, 1]) - min(lines[:, 1]))/2.0])
+    # ax.plot(lines[:, 0], lines[:, 1], marker='o', color='black')
+    ax.plot(center_spots[-1][0], center_spots[-1][1], marker='o', color='grey')    
+    ax.plot(lines[:, 0] - parking_width/2.0, lines[:, 1], color='grey') 
+    ax.plot(lines[:, 0] + parking_width/2.0, lines[:, 1], color='grey')
 
 # Finally, pretty-print the entire parking_spots structure for a full overview.
-pprint.pprint(parking_spots)
+# pprint.pprint(parking_spots)
+
+other_agent_state = env.agents['agent1'].get_state()
+other_agent_state['position'][0], other_agent_state['position'][1] = center_spots[0][0], center_spots[0][1]
+env.agents['agent1'].set_state(other_agent_state)
+ 
+ego_state = env.agents['agent0'].get_state()
+ego_state['position'][0], ego_state['position'][1] = 15.0, 0.0
+ego_state['heading_theta'] = 0.0
+env.agents['agent0'].set_state(ego_state)
+
+ax.plot(ego_state['position'][0], ego_state['position'][1], color='green', marker='o', markersize=12)
+
+other_state = env.agents['agent1'].get_state()
+ax.plot(other_state['position'][0], other_state['position'][1], color='red', marker='o', markersize=24)
+
+ped = obj_1.get_state()
+ax.plot(ped['position'][0], ped['position'][1], color='orange', marker='o', markersize=24)
 
 for i in range(1, 1000000):
     actions = {k: [1.0, .0] for k in env.agents.keys()}
@@ -160,7 +194,7 @@ for i in range(1, 1000000):
     else:
         acc = 0.0
     m = env.agents['agent0'].MASS
-    dt = 0.1
+    dt = 0.5
     max_steer = env.agents['agent0'].max_steering # 40.0 deg
     max_acc_f = env.agents['agent0'].config["max_engine_force"] 
     max_dacc_f = env.agents['agent0'].config["max_brake_force"] 
@@ -177,10 +211,16 @@ for i in range(1, 1000000):
     # action[0] = steer_norm
     # action[1] = acc_norm
 
-    next_position = current_position[:2] + np.array([dt*v*np.cos(current_heading), dt*v*np.sin(current_heading)])    
+    vel_global = np.array([v*np.cos(current_heading), v*np.sin(current_heading)]) 
+    next_position = current_position[:2] +  dt*vel_global
     # heading = current_heading + (v/2.0)*np.tan(steering)*dt
-    # env.agents['agent0'].set_position(next_position.tolist()) 
-    env.agents['agent0'].set_velocity([v*np.cos(current_heading), v*np.sin(current_heading)])
+    # env.agents['agent0'].set_position(next_position.tolist())
+    # ego_state = env.agents['agent0'].get_state()
+    # ego_state['position'][0], ego_state['position'][1] = next_position[0], next_position[1]
+    # ego_state['velocity'] = vel_global
+    # ego_state['heading_theta'] = 0.0
+    # env.agents['agent0'].set_state(ego_state) 
+    env.agents['agent0'].set_velocity(vel_global)
     # env.agents['agent0'].set_heading_theta(heading)
     # env.agents['agent0'].set_steering(steering)
     # env.agents['agent0']._apply_throttle_brake(1.0)

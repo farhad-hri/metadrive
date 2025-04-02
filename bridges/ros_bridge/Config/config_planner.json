@@ -1,0 +1,24 @@
+{
+  "vehicle-params":
+  {
+    "max_vel": 2.0,
+    "min_vel": -2.0,
+    "max_steer": 35.0,
+    "max_acceleration": 2.0,
+    "wheelbase_length": 2.7,
+    "axle_to_back": 0.95,
+    "vehicle_width": 1.85
+  },
+  "HA*-params":
+  {
+    "steer_prec": 10,
+    "vel_prec": 3,
+    "safety_margin": 0.2,
+    "xy_res": 2.0,
+    "yaw_res": 15.0,
+    "dt": 0.5
+  },
+  "goal_thresh_head": 0.05,
+  "goal_thresh_pos": 0.01,
+  "disturb": [0.0, 0.0, 0.0]
+}
